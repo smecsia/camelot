@@ -43,7 +43,7 @@ public class PluginEndpointsImpl implements PluginEndpoints {
         this.mainInputUri = mainInputUri;
         this.inputUri = uriBuilder.pluginUri(plugin, INPUT_SUFFIX, brokerConfig);
         this.delayedInputUri = uriBuilder.pluginUri(plugin, DELAYED_SUFFIX, "");
-        this.outputUri = uriBuilder.pluginUri(plugin, OUTPUT_SUFFIX, "");
+        this.outputUri = uriBuilder.localUri(plugin.getId(), OUTPUT_SUFFIX);
         this.splitUri = uriBuilder.localUri(plugin.getId(), SPLIT_SUFFIX);
         this.filteredUri = uriBuilder.localUri(plugin.getId(), FILTERED_SUFFIX);
         this.consumerUri = uriBuilder.localUri(plugin.getId(), CONSUMER_SUFFIX);

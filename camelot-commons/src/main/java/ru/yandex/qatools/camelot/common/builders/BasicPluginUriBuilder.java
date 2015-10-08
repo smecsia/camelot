@@ -17,14 +17,14 @@ public class BasicPluginUriBuilder implements PluginUriBuilder {
 
     @Override
     public String localUri(String pluginId, String suffix) {
-        return "direct:plugin." + pluginId + ((isEmpty(suffix)) ? "" : "." + suffix);
+        return "direct:plugin." + pluginId + (isEmpty(suffix) ? "" : "." + suffix);
     }
 
     @Override
     public String pluginUri(Plugin plugin, String suffix, String brokerConfig) {
         return plugin.getBaseInputUri() + "." + plugin.getId() +
-                ((isEmpty(suffix)) ? "" : "." + suffix) +
-                ((isEmpty(brokerConfig)) ? "" : brokerConfig);
+                (isEmpty(suffix) ? "" : "." + suffix) +
+                (isEmpty(brokerConfig) ? "" : brokerConfig);
     }
 
     @Override
