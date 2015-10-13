@@ -3,7 +3,7 @@
     <parent>
         <artifactId>camelot</artifactId>
         <groupId>ru.yandex.qatools.camelot</groupId>
-        <version>2.4.2-20151008</version>
+        <version>2.4.4-20151013</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
@@ -11,8 +11,11 @@
         <module>camelot-activemq</module>
         <module>camelot-kafka</module>
         <module>camelot-hazelcast</module>
+        <module>camelot-loader-maven</module>
+        <module>camelot-serialize-fst</module>
     </modules>
 
+    <name>Camelot Extensions</name>
     <artifactId>camelot-ext</artifactId>
 
     <dependencies>
