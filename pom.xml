@@ -17,7 +17,7 @@
 
     <groupId>ru.yandex.qatools.camelot</groupId>
     <artifactId>camelot</artifactId>
-    <version>2.4.4-20151013</version>
+    <version>2.4.6-SNAPSHOT</version>
 
     <packaging>pom</packaging>
     <modules>
@@ -38,10 +38,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>1.7</java.version>
+        <java.version>1.8</java.version>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
 
         <activemq.version>5.11.1</activemq.version>
-        <camel.version>2.15.3</camel.version>
+        <camel.version>2.16.0</camel.version>
         <quartz.version>1.8.6</quartz.version>
         <clay.version>2.5</clay.version>
         <hazelcast.version>3.5</hazelcast.version>
@@ -51,7 +52,7 @@
         <jersey.version>2.17</jersey.version>
         <slf4j.version>1.7.12</slf4j.version>
         <atmosphere.version>2.3.1</atmosphere.version>
-        <spring.version>4.2.1.RELEASE</spring.version>
+        <spring.version>4.2.2.RELEASE</spring.version>
         <wro4j.version>1.7.8</wro4j.version>
         <yatomata.version>1.6</yatomata.version>
         <javax.rs-api.version>2.0.1</javax.rs-api.version>

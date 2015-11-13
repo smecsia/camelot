@@ -5,10 +5,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.spi.AggregationRepository;
-import ru.yandex.qatools.camelot.api.error.RepositoryDirtyWriteAttemptException;
-import ru.yandex.qatools.camelot.api.error.RepositoryFailureException;
-import ru.yandex.qatools.camelot.api.error.RepositoryLockWaitException;
-import ru.yandex.qatools.camelot.api.error.RepositoryUnreachableException;
+import ru.yandex.qatools.camelot.api.error.*;
 import ru.yandex.qatools.camelot.config.PluginContext;
 
 import java.lang.reflect.InvocationTargetException;
@@ -43,7 +40,7 @@ public class CamelotAggregationStrategy extends FSMAggregationStrategy implement
         final Exchange originalMessage = message.copy();
         final String resentId = (String) message.getIn().getHeader(MESSAGE_RESENT_ID_HEADER);
         if (resentId != null) {
-            logger.info("Handling previously resent message for plugin '{}' with id '{}'", context.getId(), resentId);
+            logger.debug("Handling previously resent message for plugin '{}' with id '{}'", context.getId(), resentId);
         }
 
         final String key = (String) message.getIn().getHeader(CORRELATION_KEY);
@@ -67,7 +64,7 @@ public class CamelotAggregationStrategy extends FSMAggregationStrategy implement
                     context.getId(), key, e.getMessage());
             repo.confirm(camelContext, key);
             resendWithDelay(originalMessage);
-        } catch (RepositoryUnreachableException | RepositoryDirtyWriteAttemptException e) { //NOSONAR
+        } catch (RepositoryUnreachableException | RepositoryNeedRestartException | RepositoryDirtyWriteAttemptException e) { //NOSONAR
             // resend with delay
             logger.warn("Repository is unreachable/dirty write, resending message "
                     + "for plugin '{}' with key '{}', because of: {}", context.getId(), key, e.getMessage());
@@ -122,7 +119,7 @@ public class CamelotAggregationStrategy extends FSMAggregationStrategy implement
         }
         message.getIn().setHeader(MESSAGE_RESENT_ID_HEADER, message.getExchangeId());
         retryProducer.send(message);
-        logger.info("Successfully resent message for plugin '{}' with id '{}'",
+        logger.debug("Successfully resent message for plugin '{}' with id '{}'",
                 context.getId(), message.getExchangeId());
     }
 
