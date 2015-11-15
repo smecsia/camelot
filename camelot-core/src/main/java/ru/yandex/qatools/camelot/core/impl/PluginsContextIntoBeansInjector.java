@@ -11,7 +11,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.support.AbstractApplicationContext;
 import ru.yandex.qatools.camelot.common.PluginsService;
-import ru.yandex.qatools.camelot.common.ProcessingEngine;
 
 /**
  * @author Ilya Sadykov (mailto: smecsia@yandex-team.ru)
@@ -29,8 +28,8 @@ public class PluginsContextIntoBeansInjector implements ApplicationListener, App
     }
 
     private Object performInjection(Object bean) {
-        if (context.getBean(ProcessingEngine.class) != null) {
-            springInjector.inject(bean, context.getBean(ProcessingEngine.class), null);
+        if (pluginsService != null) {
+            springInjector.inject(bean, pluginsService, null);
         }
         return bean;
     }
@@ -40,6 +39,9 @@ public class PluginsContextIntoBeansInjector implements ApplicationListener, App
         this.context = applicationContext;
     }
 
+    /**
+     * Inject plugin context into all Spring beans after context is initialized completely
+     */
     @Override
     public void onApplicationEvent(ApplicationEvent event) {
         if (event instanceof ContextRefreshedEvent) {
