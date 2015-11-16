@@ -72,24 +72,18 @@ public class MongodbAggregationRepository extends ServiceSupport
 
     @Override
     public Exchange add(final CamelContext camelContext, final String key, final Exchange exchange) {
-        return writeAttempt(key, new Callable<Exchange>() {
-            @Override
-            public Exchange call() throws Exception {
-                DefaultExchangeHolder holder = DefaultExchangeHolder.marshal(exchange);
-                mongoRepo.putAndUnlock(key, holder);
-                return toExchange(camelContext, holder);
-            }
+        return writeAttempt(key, () -> {
+            DefaultExchangeHolder holder = DefaultExchangeHolder.marshal(exchange);
+            mongoRepo.putAndUnlock(key, holder);
+            return toExchange(camelContext, holder);
         });
     }
 
     @Override
     public void remove(CamelContext camelContext, final String key, final Exchange exchange) {
-        writeAttempt(key, new Callable<Exchange>() {
-            @Override
-            public Exchange call() throws Exception {
-                mongoRepo.removeAndUnlock(key);
-                return exchange;
-            }
+        writeAttempt(key, () -> {
+            mongoRepo.removeAndUnlock(key);
+            return exchange;
         });
     }
 
@@ -229,10 +223,10 @@ public class MongodbAggregationRepository extends ServiceSupport
     @Override
     public Map<String, Exchange> values(CamelContext camelContext) {
         Map<String, DefaultExchangeHolder> holderMap = new LinkedHashMap<>(mongoRepo.keyValueMap());
-        Map<String, Exchange> result = unmodifiableMap(new HashMap<>(holderMap.size(), 1));
+        Map<String, Exchange> result = new HashMap<>(holderMap.size(), 1);
         for (Map.Entry<String, DefaultExchangeHolder> entry : holderMap.entrySet()) {
             result.put(entry.getKey()   , toExchange(camelContext, entry.getValue()));
         }
-        return result;
+        return unmodifiableMap(result);
     }
 }
