@@ -25,7 +25,7 @@ public class SystemInfoResource {
 
     @GET
     @Path("seda/queues")
-    @Produces({MediaType.TEXT_PLAIN})
+    @Produces({MediaType.APPLICATION_JSON})
     public Map<String, Integer> getSedaInfo() {
         return camelContext.getComponent("seda", SedaComponent.class)
                 .getQueues().entrySet().stream().collect(
