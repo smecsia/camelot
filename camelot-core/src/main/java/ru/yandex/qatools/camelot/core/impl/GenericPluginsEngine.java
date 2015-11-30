@@ -6,10 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.core.io.Resource;
-import ru.yandex.qatools.camelot.api.AppConfig;
-import ru.yandex.qatools.camelot.api.EventProducer;
-import ru.yandex.qatools.camelot.api.PluginEndpoints;
-import ru.yandex.qatools.camelot.api.PluginsInterop;
+import ru.yandex.qatools.camelot.api.*;
 import ru.yandex.qatools.camelot.common.*;
 import ru.yandex.qatools.camelot.common.builders.*;
 import ru.yandex.qatools.camelot.config.*;
@@ -26,14 +23,15 @@ import java.util.*;
 import static java.lang.String.format;
 import static jodd.util.StringUtil.isEmpty;
 import static ru.yandex.qatools.camelot.core.util.IOUtils.readResource;
-import static ru.yandex.qatools.camelot.core.util.ServiceUtil.*;
+import static ru.yandex.qatools.camelot.core.util.ServiceUtil.initPluginAppConfig;
 import static ru.yandex.qatools.camelot.util.ExceptionUtil.formatStackTrace;
 import static ru.yandex.qatools.camelot.util.NameUtil.defaultPluginId;
+import static ru.yandex.qatools.camelot.util.ServiceUtil.initEventProducer;
 
 /**
  * @author Ilya Sadykov (mailto: smecsia@yandex-team.ru)
  */
-public abstract class GenericPluginsEngine implements PluginsService, ReloadableService, RoutingService {
+public abstract class GenericPluginsEngine implements PluginsService, RoutingService {
     public static final String PROPS_PATH = "classpath*:/camelot-default.properties";
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected final CamelContext camelContext;
@@ -48,14 +46,15 @@ public abstract class GenericPluginsEngine implements PluginsService, Reloadable
     protected Map<String, Plugin> pluginsByClassMap;
     private PluginContextInjector contextInjector;
     private BuildersFactory buildersFactory;
-    private volatile boolean loading = false;
     private ResourceBuilder resourceBuilder;
     private AppConfig appConfig;
     private String engineName;
     private EventProducer mainInput;
     private PluginUriBuilder uriBuilder;
     private MessagesSerializer messagesSerializer;
+    private QuartzInitializerFactory quartzFactory;
     private InterimProcessor interimProcessor = null;
+    private ClientSendersProvider clientSendersProvider;
 
     public GenericPluginsEngine(Resource[] configResources, PluginLoader pluginLoader, CamelContext camelContext,
                                 String inputUri, String outputUri) {
@@ -76,61 +75,22 @@ public abstract class GenericPluginsEngine implements PluginsService, Reloadable
     /**
      * Initialize the common configuration
      */
-    @Override
     public synchronized void init() {
-        startLoading();
         // set the interop ability
         this.interop = new PluginsInteropService(this);
 
         try {
             this.mainInput = initEventProducer(camelContext, inputUri, messagesSerializer);
+            if (this.clientSendersProvider == null) {
+                this.clientSendersProvider = new BasicClientSendersProvider(camelContext, messagesSerializer);
+            }
             initializePlugins();
             initWebResources();
         } catch (Exception e) {
             logger.error("Could not initialize plugins configurations: {}", formatStackTrace(e), e);
         }
-        stopLoading();
     }
 
-    /**
-     * Reinitialize the service with stopping the plugins first
-     */
-    @Override
-    public void reload() {
-        reloadAndStart();
-    }
-
-    /**
-     * Reinitialize the service
-     */
-    @Override
-    public synchronized void reloadAndStart() {
-        startLoading();
-        try {
-            // empty the configuration to reload
-            pluginsConfigs = null;
-            pluginsMap = null;
-            pluginsByClassMap = null;
-            pluginTree = null;
-
-            initializePlugins();
-            initWebResources();
-
-            camelContext.start();
-        } catch (Exception e) {
-            logger.error("Could not initialize plugins configurations", e);
-        }
-        stopLoading();
-    }
-
-    @Override
-    public synchronized void stop() {
-        try {
-            stopPlugins();
-        } catch (Exception e) {
-            logger.error("Failed to stop plugins!", e);
-        }
-    }
 
     /**
      * Returns or initializes the plugin system configuration
@@ -326,6 +286,26 @@ public abstract class GenericPluginsEngine implements PluginsService, Reloadable
         this.messagesSerializer = messagesSerializer;
     }
 
+    @Override
+    public QuartzInitializerFactory getQuartzFactory() {
+        return quartzFactory;
+    }
+
+    @Override
+    public void setQuartzFactory(QuartzInitializerFactory quartzFactory) {
+        this.quartzFactory = quartzFactory;
+    }
+
+    @Override
+    public ClientSendersProvider getClientSendersProvider() {
+        return clientSendersProvider;
+    }
+
+    @Override
+    public void setClientSendersProvider(ClientSendersProvider clientSendersProvider) {
+        this.clientSendersProvider = clientSendersProvider;
+    }
+
     public InterimProcessor getInterimProcessor() {
         return interimProcessor;
     }
@@ -344,14 +324,6 @@ public abstract class GenericPluginsEngine implements PluginsService, Reloadable
     @Override
     public boolean pluginCanConsume(Plugin plugin) {
         return !isEmpty(plugin.getAggregator()) || !isEmpty(plugin.getProcessor());
-    }
-
-    /**
-     * Is currently plugins are reloading
-     */
-    @Override
-    public boolean isLoading() {
-        return loading;
     }
 
     /** ------------------------------------------------------------- **/
@@ -417,21 +389,6 @@ public abstract class GenericPluginsEngine implements PluginsService, Reloadable
         return configs;
     }
 
-
-    /**
-     * Set the loading to true
-     */
-    protected void startLoading() {
-        loading = true;
-    }
-
-    /**
-     * Set the loading to false
-     */
-    protected void stopLoading() {
-        loading = false;
-    }
-
     /**
      * Initialize the basic routes for the plugin
      */
@@ -439,7 +396,7 @@ public abstract class GenericPluginsEngine implements PluginsService, Reloadable
 
     }
 
-    protected  <T extends ProcessorDefinition> T addInterimRoute(T route) {
+    protected <T extends ProcessorDefinition> T addInterimRoute(T route) {
         if (getInterimProcessor() != null) {
             route.process(getInterimProcessor());
         }
@@ -505,7 +462,7 @@ public abstract class GenericPluginsEngine implements PluginsService, Reloadable
         context.setInterop(interop);
         context.setOutput(initEventProducer(camelContext, endpoints.getProducerUri(), messagesSerializer));
         context.setMainInput(mainInput);
-        context.setClientSendersProvider(new ClientSendersProviderImpl(camelContext, endpoints.getFrontendSendUri(), messagesSerializer));
+        context.setClientSendersProvider(clientSendersProvider);
         context.setInjector(getContextInjector());
         context.setMessagesSerializer(messagesSerializer);
         context.setInterimProcessor(interimProcessor);
@@ -541,12 +498,12 @@ public abstract class GenericPluginsEngine implements PluginsService, Reloadable
     private Map<String, Plugin> buildPluginsByClassMap(final List<PluginsConfig> configs) throws ClassNotFoundException {
         Map<String, Plugin> result = new HashMap<>();
         for (PluginsConfig config : configs) {
-            for (final PluginsSource source : config.getSources()) {
-                for (final Plugin plugin : source.getPlugins()) {
-                    Class pluginClass = plugin.getContext().getClassLoader().loadClass(
-                            plugin.getContext().getPluginClass()
-                    );
-                    result.put(pluginClass.getName(), plugin);
+            for (PluginsSource source : config.getSources()) {
+                for (Plugin plugin : source.getPlugins()) {
+                    result.put(plugin.getContext().getPluginClass(), plugin);
+                    if (!isEmpty(plugin.getResource())) { //NOSONAR
+                        result.put(plugin.getResource(), plugin);
+                    }
                 }
             }
         }

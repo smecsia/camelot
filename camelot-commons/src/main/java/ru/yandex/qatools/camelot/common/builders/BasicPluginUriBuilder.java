@@ -10,14 +10,11 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
  */
 public class BasicPluginUriBuilder implements PluginUriBuilder {
 
-    @Override
-    public String broadcastUri(String pluginId, String suffix) {
-        return localUri(pluginId, suffix);
-    }
+    public static final String DIRECT_PREFIX = "direct:";
 
     @Override
     public String localUri(String pluginId, String suffix) {
-        return "direct:plugin." + pluginId + (isEmpty(suffix) ? "" : "." + suffix);
+        return DIRECT_PREFIX + "plugin." + pluginId + (isEmpty(suffix) ? "" : "." + suffix);
     }
 
     @Override
@@ -28,17 +25,12 @@ public class BasicPluginUriBuilder implements PluginUriBuilder {
     }
 
     @Override
-    public String tmpInputBufferUri() {
-        return localUri("tmp", "input");
+    public String basePluginUri() {
+        return "seda:plugin";
     }
 
     @Override
     public String frontendBroadcastUri() {
-        return localUri("frontend", "input");
-    }
-
-    @Override
-    public String basePluginUri() {
-        return "seda:plugin";
+        return DIRECT_PREFIX + "frontend.notify";
     }
 }
