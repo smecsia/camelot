@@ -29,7 +29,7 @@ public class SystemInfoResource {
     public Map<String, Integer> getSedaInfo() {
         return camelContext.getComponent("seda", SedaComponent.class)
                 .getQueues().entrySet().stream().collect(
-                        toMap(Entry::getKey, e -> e.getValue().getCount())
+                        toMap(Entry::getKey, e -> e.getValue().getSize())
                 );
     }
 
