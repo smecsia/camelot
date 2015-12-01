@@ -27,10 +27,10 @@ public class SystemInfoResource {
     @Path("seda/queues")
     @Produces({MediaType.APPLICATION_JSON})
     public Map<String, Integer> getSedaInfo() {
-        return camelContext.getComponent("seda", SedaComponent.class)
-                .getQueues().entrySet().stream().collect(
-                        toMap(Entry::getKey, e -> e.getValue().getSize())
-                );
+        final SedaComponent seda = camelContext.getComponent("seda", SedaComponent.class);
+        return seda.getQueues().entrySet().stream().collect(
+                toMap(Entry::getKey, e -> e.getValue().getQueue().size())
+        );
     }
 
     @GET
