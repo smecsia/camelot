@@ -17,7 +17,6 @@ import ru.yandex.qatools.camelot.common.PluginsService;
 import ru.yandex.qatools.camelot.config.Plugin;
 
 import javax.annotation.PostConstruct;
-
 import java.io.Serializable;
 
 import static java.text.MessageFormat.format;
@@ -93,8 +92,8 @@ public class MongodbDirectRoutesInitializer implements CamelContextAware {
                     addSaverRoute(camelContext, plugin, endpoints, colName, queue);
                     initPoller(camelContext, plugin, inputUri, queue);
                 } catch (Exception e) {
-                    throw new RuntimeException(format("Failed to initialize MongoDB direct route for %s!",
-                            plugin.getId()), e); //NOSONAR
+                    throw new RuntimeException(format("Failed to initialize MongoDB direct route for %s!",//NOSONAR
+                            plugin.getId()), e);
                 }
 
             }
@@ -112,8 +111,8 @@ public class MongodbDirectRoutesInitializer implements CamelContextAware {
                             PLUGIN_ID, m.pluginId
                     ))));
         } catch (Exception e) {
-            throw new RuntimeException(format("Failed to initialize MongoDB poller for %s!",
-                    plugin.getId()), e);//NOSONAR
+            throw new RuntimeException(format("Failed to initialize MongoDB poller for %s!",//NOSONAR
+                    plugin.getId()), e);
         }
     }
 
