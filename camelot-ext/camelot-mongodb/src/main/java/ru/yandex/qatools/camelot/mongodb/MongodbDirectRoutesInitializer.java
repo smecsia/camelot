@@ -33,6 +33,7 @@ import static ru.yandex.qatools.camelot.util.ServiceUtil.initEventProducer;
 public class MongodbDirectRoutesInitializer implements CamelContextAware {
     public static final String URI_PREFIX = "direct://mongodb";
     private static final Logger LOGGER = LoggerFactory.getLogger(MongodbDirectRoutesInitializer.class);
+    public static final String QUEUE_SUFFIX = "_direct_queue";
     private final PluginsService pluginsService;
     private final MongoClient mongoClient;
     private final String dbName;
@@ -55,8 +56,8 @@ public class MongodbDirectRoutesInitializer implements CamelContextAware {
         return new MongoQueueMessage(plugin.getId(), event);
     }
 
-    private static String calcColName(String inputUri) {
-        return inputUri.replace(".", "_");
+    private static String calcColName(Plugin plugin) {
+        return plugin.getId() + QUEUE_SUFFIX;
     }
 
     private static String calcFromUri(String inputUri) {
@@ -85,7 +86,7 @@ public class MongodbDirectRoutesInitializer implements CamelContextAware {
             final String inputUri = endpoints.getInputUri();
             if (inputUri.startsWith(URI_PREFIX)) {
                 LOGGER.info("Initializing MongoDB direct route for {}", plugin.getId());
-                final String colName = calcColName(inputUri);
+                final String colName = calcColName(plugin);
                 final MongoTailingQueue<MongoQueueMessage> queue = initQueue(colName);
                 queue.init();
                 try {
