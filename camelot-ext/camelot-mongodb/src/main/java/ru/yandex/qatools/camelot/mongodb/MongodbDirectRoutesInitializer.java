@@ -32,11 +32,10 @@ import static ru.yandex.qatools.camelot.util.ServiceUtil.initEventProducer;
  * @author Ilya Sadykov
  */
 public class MongodbDirectRoutesInitializer implements CamelContextAware {
-    public static final String URI_PREFIX = "mongodb://topic:";
+    public static final String URI_PREFIX = "mongodb://topic";
     public static final String NEW_INPUT_URI_PREFIX = "direct://mongodb.topic.";
     public static final String COL_SUFFIX = "_direct_queue";
     private static final Logger LOGGER = LoggerFactory.getLogger(MongodbDirectRoutesInitializer.class);
-    public static final String QUEUE_SUFFIX = "_direct_queue";
     private final PluginsService pluginsService;
     private final MongoClient mongoClient;
     private final String dbName;
