@@ -327,6 +327,12 @@ public abstract class GenericPluginsEngine implements PluginsService, RoutingSer
         return !isEmpty(plugin.getAggregator()) || !isEmpty(plugin.getProcessor());
     }
 
+    @Override
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+
     /** ------------------------------------------------------------- **/
 
     /**
