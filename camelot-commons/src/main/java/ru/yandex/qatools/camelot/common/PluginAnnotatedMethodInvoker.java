@@ -56,8 +56,8 @@ public class PluginAnnotatedMethodInvoker<A> implements PluginMethodInvoker {
     }
 
     protected Object getPluginInstance() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-        final String aggOrProc = !isEmpty(plugin.getAggregator()) ? plugin.getAggregator() : plugin.getProcessor();
-        return (pluginInstance == null) ? plugin.getContext().getClassLoader().loadClass(aggOrProc).newInstance() : pluginInstance;
+        return (pluginInstance == null) ? plugin.getContext().getClassLoader()
+                .loadClass(plugin.getContext().getPluginClass()).newInstance() : pluginInstance;
     }
 
     public void setPluginInstance(Object pluginInstance) {
