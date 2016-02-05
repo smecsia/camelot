@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static ru.yandex.qatools.camelot.util.ExceptionUtil.formatStackTrace;
 import static ru.yandex.qatools.camelot.util.ServiceUtil.forEachAnnotatedMethod;
 
@@ -21,6 +22,7 @@ public class PluginAnnotatedMethodInvoker<A> implements PluginMethodInvoker {
     protected final Plugin plugin;
     protected final Class anClass;
     protected List<Method> methods = new ArrayList<>();
+    protected Object pluginInstance;
 
     public PluginAnnotatedMethodInvoker(Plugin plugin, Class anClass) {
         this.plugin = plugin;
@@ -53,10 +55,19 @@ public class PluginAnnotatedMethodInvoker<A> implements PluginMethodInvoker {
         }
     }
 
+    protected Object getPluginInstance() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        final String aggOrProc = !isEmpty(plugin.getAggregator()) ? plugin.getAggregator() : plugin.getProcessor();
+        return (pluginInstance == null) ? plugin.getContext().getClassLoader().loadClass(aggOrProc).newInstance() : pluginInstance;
+    }
+
+    public void setPluginInstance(Object pluginInstance) {
+        this.pluginInstance = pluginInstance;
+    }
+
     @Override
     public void invoke(Method method, Object... args) {
         try {
-            Object instance = plugin.getContext().getClassLoader().loadClass(plugin.getContext().getPluginClass()).newInstance();
+            final Object instance = getPluginInstance();
             plugin.getContext().getInjector().inject(instance, plugin.getContext());
             method.invoke(instance, args);
         } catch (InvocationTargetException e) {//NOSONAR
