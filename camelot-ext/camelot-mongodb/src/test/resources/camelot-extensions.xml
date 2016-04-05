@@ -11,21 +11,6 @@
 
     <context:annotation-config/>
     <context:component-scan base-package="ru.yandex.qatools.camelot.core"/>
-    <bean id="camelot-config" class="ru.yandex.qatools.camelot.spring.ListablePropertyPlaceholderConfigurer">
-        <property name="locations">
-            <list>
-                <value>classpath*:camelot-default.properties</value>
-                <value>classpath:camelot-test.properties</value>
-            </list>
-        </property>
-        <property name="properties">
-            <util:properties>
-                <prop key="camelot.mongodb.replicaset">
-                    localhost:#{T(ru.yandex.qatools.camelot.util.SocketUtil).findFreePort()}
-                </prop>
-            </util:properties>
-        </property>
-    </bean>
 
     <bean id="camelot-mongodb-embedded"
           class="ru.yandex.qatools.embed.service.MongoEmbeddedService"
