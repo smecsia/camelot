@@ -55,7 +55,7 @@ public class MongodbClientSendersProvider implements ClientSendersProvider, Came
     @Override
     public ClientMessageSender getSender(String topic, String pluginId, String feNotifyUri) {
         return (t, m) -> senderPool.submit(
-                () -> queue.add(new MongoQueueMessage(pluginId, m, topic))
+                () -> queue.add(new MongoQueueMessage(pluginId, m, t))
         );
     }
 
